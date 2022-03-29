@@ -12,10 +12,10 @@
       <div class="col-sm-12">
         <div style="margin: 25px 0">
           <label for="" class="control-label">Sort by:</label>
-          <select name="" id="">
-            <option value="">Default</option>
-            <option value="High to Low">High to Low</option>
-            <option value="Low to High">Low to High</option>
+          <select :value="sort" v-model="sort">
+            <option value="default">Default</option>
+            <option value="HighToLow">High to Low</option>
+            <option value="LowToHigh">Low to High</option>
           </select>
         </div>
       </div>
@@ -62,12 +62,24 @@ export default {
   data() {
     return {
       allData: [],
-      slicedData: [],
+      rowData: [],
       color: ["bg-info", "bg-success", "bg-warning", "bg-danger"],
       cartDataCount: 0,
+      sort: "default",
     };
   },
   methods: {
+    sorting(arr, type) {
+      switch (type) {
+        case "LowToHigh":
+          return arr.sort((a, b) => a.price - b.price);
+        case "HighToLow":
+          return arr.sort((a, b) => b.price - a.price);
+        default:
+          return arr;
+      }
+    },
+
     //for setting data to local Storage
     putIntoLocalStorage(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
@@ -86,7 +98,8 @@ export default {
     setShowData(res) {
       let i = 0;
       let arr = [];
-      // res = sorting(res, sort);
+      // let res = this.sorting(param, this.sort);
+      res = this.sorting(res, this.sort);
       while (i < res.length) {
         const na = res.slice(i, i + 4);
         let e = na.map(({ _id, image, name, price }) => {
@@ -123,12 +136,20 @@ export default {
       this.cartDataCount = localData.length;
     },
   },
-
+  watch: {
+    sort: {
+      handler() {
+        this.setShowData([...this.rowData]);
+      },
+      immediate: true,
+    },
+  },
   mounted: async function () {
     const res = await axios.get(
       "http://interviewapi.ngminds.com/api/getAllProducts"
     );
     this.setShowData(res.data.products);
+    this.rowData = res.data.products;
     this.cartDataCount = this.getDataFromLocalStorage("cartItem").length;
   },
 };

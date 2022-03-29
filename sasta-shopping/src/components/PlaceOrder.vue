@@ -2,10 +2,10 @@
   <div class="container">
     <div class="row">
       <h1>
-        <a href="/">My Ecommerce Site</a>
+        <Router-Link to="/">My Ecommerce Site</Router-Link>
 
         <span class="pull-right">
-          <a href="cart.html">Cart (0)</a>
+          <Router-Link to="cart">Cart ({{ orders.length }})</Router-Link>
         </span>
       </h1>
       <hr />
@@ -17,29 +17,27 @@
               <table class="table table-striped">
                 <thead class="table-head">
                   <tr>
-                    <td>Product Name</td>
-                    <td>Quntity</td>
-                    <td>SubTotal</td>
+                    <th>Product Name</th>
+                    <th>Quntity</th>
+                    <th>SubTotal</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>H2O Sb104 Stainless Steel Sports</td>
-                    <td>2</td>
-                    <td><i class="fa fa-inr"></i>400</td>
-                  </tr>
-                  <tr>
-                    <td>bbb</td>
-                    <td>1</td>
-                    <td><i class="fa fa-inr"></i>1000</td>
+                  <tr
+                    v-for="({ name, qty, price }, index) in orders"
+                    :key="index"
+                  >
+                    <td>{{ name }}</td>
+                    <td>{{ qty }}</td>
+                    <td><i class="fa fa-inr"></i>{{ price * qty }}</td>
                   </tr>
                   <tr>
                     <td><strong>Total</strong></td>
                     <td>
-                      <strong> 3</strong>
+                      <strong>{{ qtyTotal }}</strong>
                     </td>
                     <td>
-                      <strong><i class="fa fa-inr"></i>2400 </strong>
+                      <strong><i class="fa fa-inr"></i>{{ amtTotal }}</strong>
                     </td>
                   </tr>
                 </tbody>
@@ -61,6 +59,7 @@
                     class="form-control"
                     id="inputName3"
                     placeholder="Name"
+                    v-model="userInfo.userName"
                   />
                 </div>
               </div>
@@ -73,13 +72,20 @@
                     class="form-control"
                     id="inputEmail3"
                     placeholder="Deliver Address"
+                    v-model="userInfo.address"
                   ></textarea>
                 </div>
               </div>
               <div class="form-group">
                 <label class="col-sm-2 control-label"></label>
                 <div class="col-sm-6">
-                  <a href="" class="btn btn-warning">Confirm Order</a>
+                  <button
+                    type="submit"
+                    class="btn btn-warning"
+                    @click="(e) => submitData(e)"
+                  >
+                    Confirm Order
+                  </button>
                 </div>
               </div>
             </form>
@@ -92,8 +98,70 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "PlaceOrder",
+  data() {
+    return {
+      orders: [],
+      qtyTotal: 0,
+      amtTotal: 0,
+      userInfo: {
+        userName: "",
+        address: "",
+      },
+    };
+  },
+  methods: {
+    //for getting data from local Storage
+    getDataFromLocalStorage(key) {
+      return localStorage.getItem(key)
+        ? JSON.parse(localStorage.getItem(key))
+        : [];
+    },
+    calculateTotal(data) {
+      let sum = 0;
+      let qtyTot = 0;
+      data.forEach(({ qty, price }) => {
+        sum += qty * price;
+        qtyTot += qty;
+      });
+      this.amtTotal = sum;
+      this.qtyTotal = qtyTot;
+    },
+    setOrders(data) {
+      this.orders = data;
+      this.calculateTotal(data);
+    },
+    submitData(e) {
+      e.preventDefault();
+      // console.log(this.userInfo);
+      let obj = {
+        personName: this.userInfo.userName,
+        deliveryAddress: this.userInfo.address,
+        productsOrdered: this.orders.map(({ _id, price, qty }) => {
+          return { productID: _id, price, qty, total: price * qty };
+        }),
+        orderTotal: this.amtTotal,
+      };
+      async function post(self) {
+        const res = await axios.post(
+          "http://interviewapi.ngminds.com/api/placeOrder",
+          obj
+        );
+
+        if (res.status === 200) {
+          self.$router.push({ path: "/" });
+        }
+      }
+      post(this);
+    },
+  },
+  mounted() {
+    let d = this.getDataFromLocalStorage("cartItem");
+    this.setOrders(d);
+  },
 };
 </script>
 
