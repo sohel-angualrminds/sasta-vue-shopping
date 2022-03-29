@@ -1,9 +1,9 @@
 <template>
   <div class="container">
     <h1>
-      <a href="/">My Ecommerce Site</a>
+      <router-link to="/">My Ecommerce Site</router-link>
       <span class="pull-right">
-        <a href="/cart">Cart (0)</a>
+        <router-link to="/cart">Cart ({{ cartDataCount }})</router-link>
       </span>
     </h1>
     <hr />
@@ -21,29 +21,36 @@
       </div>
     </div>
 
-    <div class="row">
-      <div v-for="({ _id, image, name, price }, inx) in allData" :key="inx">
-        <div class="col-md-3" :key="_id">
-          <div :class="this.color[inx % 4]">
-            <img
-              :src="`http://interviewapi.ngminds.com/${image}`"
-              width="100"
-              height="200"
-              :alt="name"
-            />
-            <br />
-            <br />
-            <p>{{ name }}</p>
-            <p>
-              <i class="fa fa-inr"></i>
-              {{ price }}
-            </p>
-            <span class="btn btn-warning"> Add to Cart </span>
+    <div v-for="(item, index) in allData" :key="index">
+      <div class="row">
+        <div v-for="({ _id, image, name, price }, inx) in item" :key="inx">
+          <div class="col-md-3" :key="_id">
+            <div :class="this.color[inx % 4]">
+              <img
+                :src="`http://interviewapi.ngminds.com/${image}`"
+                width="100"
+                height="200"
+                :alt="name"
+              />
+              <br />
+              <br />
+              <p>{{ name }}</p>
+              <p>
+                <i class="fa fa-inr"></i>
+                {{ price }}
+              </p>
+              <span
+                @click="addToCart({ _id, image, name, price })"
+                class="btn btn-warning"
+              >
+                Add to Cart
+              </span>
+            </div>
           </div>
         </div>
       </div>
+      <hr />
     </div>
-    <hr />
   </div>
 </template>
 
@@ -55,13 +62,25 @@ export default {
   data() {
     return {
       allData: [],
+      slicedData: [],
       color: ["bg-info", "bg-success", "bg-warning", "bg-danger"],
+      cartDataCount: 0,
     };
   },
   methods: {
+    //for setting data to local Storage
+    putIntoLocalStorage(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    },
+    //for getting data from local Storage
+    getDataFromLocalStorage(key) {
+      return localStorage.getItem(key)
+        ? JSON.parse(localStorage.getItem(key))
+        : [];
+    },
+    //for seting state data
     setState(data) {
       this.allData = data;
-      console.log(this.allData);
     },
     //setting showing data
     setShowData(res) {
@@ -70,45 +89,47 @@ export default {
       // res = sorting(res, sort);
       while (i < res.length) {
         const na = res.slice(i, i + 4);
-        let e = na.map(({ _id, image, name, price }, index) => {
-          return (
-            <div class="col-md-3" key={_id}>
-              <div class={this.color[index]}>
-                <img
-                  src={`http://interviewapi.ngminds.com/${image}`}
-                  width="100"
-                  height="200"
-                  alt={name}
-                />
-                <br />
-                <br />
-                <p>{name}</p>
-                <p>
-                  <i class="fa fa-inr"></i>
-                  {price}
-                </p>
-                <span class="btn btn-warning">Add to Cart</span>
-              </div>
-            </div>
-          );
+        let e = na.map(({ _id, image, name, price }) => {
+          return { _id, image, name, price };
         });
-        arr.push(
-          <div key={i}>
-            <div class="row">{e}</div>
-            <hr />
-          </div>
-        );
+        arr.push(e);
         i += 4;
       }
-      return arr;
-      // setShowProducts(arr);
+      this.setState(arr);
+    },
+    //for after @clicking add to cart adding element to cart
+    addToCart({ _id, image, name, price }) {
+      //{ _id, image, name, price }
+      let localData = this.getDataFromLocalStorage("cartItem");
+
+      if (localData.length > 0) {
+        //scenario second it is local storage data available but different products are added into cart
+        //scenario third if it is local storage data available and same products added multiple time
+        let indx = -1;
+        localData.find((item, index) => {
+          if (item._id === _id) {
+            item.qty++;
+            indx = index;
+          }
+        });
+        if (indx < 0) {
+          localData.push({ _id, image, name, price, qty: 1 });
+        }
+      } else {
+        //scenario first if nothing present in local storage
+        localData.push({ _id, image, name, price, qty: 1 });
+      }
+      this.putIntoLocalStorage("cartItem", localData);
+      this.cartDataCount = localData.length;
     },
   },
+
   mounted: async function () {
     const res = await axios.get(
       "http://interviewapi.ngminds.com/api/getAllProducts"
     );
-    this.setState(res.data.products);
+    this.setShowData(res.data.products);
+    this.cartDataCount = this.getDataFromLocalStorage("cartItem").length;
   },
 };
 </script>
