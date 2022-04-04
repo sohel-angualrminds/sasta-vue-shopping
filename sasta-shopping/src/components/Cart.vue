@@ -73,8 +73,10 @@
             <div class="col-md-3">{{ total }}</div>
           </div>
           <div class="panel-footer">
-            <router-link to="/" class="btn btn-success">Continue Shopping</router-link>
-        
+            <router-link to="/" class="btn btn-success"
+              >Continue Shopping</router-link
+            >
+
             <router-link
               to="/placeOrder"
               class="pull-right btn btn-danger"
@@ -89,6 +91,7 @@
 </template>
 
 <script>
+import localService from "../mixins/localService";
 export default {
   name: "CartItem",
   data() {
@@ -97,6 +100,7 @@ export default {
       total: 0,
     };
   },
+  mixins: [localService],//for common functionality
   methods: {
     calculateTotal(data) {
       let sum = 0;
@@ -106,16 +110,6 @@ export default {
     setData(data) {
       this.data = data;
       this.calculateTotal(data);
-    },
-    //for getting data from local Storage
-    getDataFromLocalStorage(key) {
-      return localStorage.getItem(key)
-        ? JSON.parse(localStorage.getItem(key))
-        : [];
-    },
-    //for putting data to localStorage
-    putIntoLocalStorage(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
     },
     incrementQty(e, index) {
       e.preventDefault();

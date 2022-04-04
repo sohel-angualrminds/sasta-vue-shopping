@@ -99,7 +99,7 @@
 
 <script>
 import axios from "axios";
-
+import localService from "../mixins/localService";
 export default {
   name: "PlaceOrder",
   data() {
@@ -113,13 +113,8 @@ export default {
       },
     };
   },
+  mixins: [localService],
   methods: {
-    //for getting data from local Storage
-    getDataFromLocalStorage(key) {
-      return localStorage.getItem(key)
-        ? JSON.parse(localStorage.getItem(key))
-        : [];
-    },
     calculateTotal(data) {
       let sum = 0;
       let qtyTot = 0;

@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <div v-for="(item, index) in allData" :key="index">
+    <template v-for="(item, index) in allData" :key="index">
       <div class="row">
         <div v-for="({ _id, image, name, price }, inx) in item" :key="inx">
           <div class="col-md-3" :key="_id">
@@ -50,12 +50,36 @@
         </div>
       </div>
       <hr />
+    </template>
+
+    <div class="row">
+      <div class="col-sm-8">
+        <ul class="pagination">
+          <li class="page-item"><a class="page-link">Previous</a></li>
+          <li class="page-item active"><a class="page-link">1</a></li>
+          <li class="page-item"><a class="page-link">2</a></li>
+          <li class="page-item"><a class="page-link">3</a></li>
+          <li class="page-item"><a class="page-link">Next</a></li>
+        </ul>
+      </div>
+      <div class="col-sm-4 text-right">
+        <div style="margin: 25px 0">
+          <label for="" class="control-label">Items Per Page:</label>
+          <select name="" id="">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import axios from "axios";
+import localService from "../mixins/localService";
 
 export default {
   name: "HomePage",
@@ -68,6 +92,7 @@ export default {
       sort: "default",
     };
   },
+  mixins: [localService],
   methods: {
     sorting(arr, type) {
       switch (type) {
@@ -79,17 +104,17 @@ export default {
           return arr;
       }
     },
-
-    //for setting data to local Storage
-    putIntoLocalStorage(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
-    },
-    //for getting data from local Storage
-    getDataFromLocalStorage(key) {
-      return localStorage.getItem(key)
-        ? JSON.parse(localStorage.getItem(key))
-        : [];
-    },
+  //see in mixins
+    // //for setting data to local Storage
+    // putIntoLocalStorage(key, value) {
+    //   localStorage.setItem(key, JSON.stringify(value));
+    // },
+    // //for getting data from local Storage
+    // getDataFromLocalStorage(key) {
+    //   return localStorage.getItem(key)
+    //     ? JSON.parse(localStorage.getItem(key))
+    //     : [];
+    // },
     //for seting state data
     setState(data) {
       this.allData = data;
@@ -142,9 +167,10 @@ export default {
         this.setShowData([...this.rowData]);
       },
       immediate: true,
+      deep: true,
     },
   },
-  mounted: async function () {
+  created: async function () {
     const res = await axios.get(
       "http://interviewapi.ngminds.com/api/getAllProducts"
     );
