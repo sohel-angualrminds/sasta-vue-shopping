@@ -79,22 +79,118 @@
 
 <script>
 import axios from "axios";
-import localService from "../mixins/localService";
+import { toRefs, reactive, onMounted, watch } from "vue";
+// import localService from "../mixins/localService";
+import useLocalService from "../composable/useLocalService";
 
 export default {
   name: "HomePage",
-  data() {
-    return {
+  // data() {
+  //   return {
+  //     allData: [],
+  //     rowData: [],
+  //     color: ["bg-info", "bg-success", "bg-warning", "bg-danger"],
+  //     cartDataCount: 0,
+  //     sort: "default",
+  //   };
+  // },
+  // mixins: [localService],
+  // methods: {
+  // sorting(arr, type) {
+  //   switch (type) {
+  //     case "LowToHigh":
+  //       return arr.sort((a, b) => a.price - b.price);
+  //     case "HighToLow":
+  //       return arr.sort((a, b) => b.price - a.price);
+  //     default:
+  //       return arr;
+  //   }
+  // },
+  //see in mixins
+  // //for setting data to local Storage
+  // putIntoLocalStorage(key, value) {
+  //   localStorage.setItem(key, JSON.stringify(value));
+  // },
+  // //for getting data from local Storage
+  // getDataFromLocalStorage(key) {
+  //   return localStorage.getItem(key)
+  //     ? JSON.parse(localStorage.getItem(key))
+  //     : [];
+  // },
+  //for seting state data
+  // setState(data) {
+  //   this.allData = data;
+  // },
+  // //setting showing data
+  // setShowData(res) {
+  //   let i = 0;
+  //   let arr = [];
+  //   // let res = this.sorting(param, this.sort);
+  //   res = this.sorting(res, this.sort);
+  //   while (i < res.length) {
+  //     const na = res.slice(i, i + 4);
+  //     let e = na.map(({ _id, image, name, price }) => {
+  //       return { _id, image, name, price };
+  //     });
+  //     arr.push(e);
+  //     i += 4;
+  //   }
+  //   this.setState(arr);
+  // },
+  // //for after @clicking add to cart adding element to cart
+  // addToCart({ _id, image, name, price }) {
+  //   //{ _id, image, name, price }
+  //   let localData = this.getDataFromLocalStorage("cartItem");
+  //   if (localData.length > 0) {
+  //     //scenario second it is local storage data available but different products are added into cart
+  //     //scenario third if it is local storage data available and same products added multiple time
+  //     let indx = -1;
+  //     localData.find((item, index) => {
+  //       if (item._id === _id) {
+  //         item.qty++;
+  //         indx = index;
+  //       }
+  //     });
+  //     if (indx < 0) {
+  //       localData.push({ _id, image, name, price, qty: 1 });
+  //     }
+  //   } else {
+  //     //scenario first if nothing present in local storage
+  //     localData.push({ _id, image, name, price, qty: 1 });
+  //   }
+  //   this.putIntoLocalStorage("cartItem", localData);
+  //   this.cartDataCount = localData.length;
+  // },
+  // },
+  // watch: {
+  //   sort: {
+  //     handler() {
+  //       this.setShowData([...this.rowData]);
+  //     },
+  //     immediate: true,
+  //     deep: true,
+  //   },
+  // },
+  // created: async function () {
+  //   const res = await axios.get(
+  //     "http://interviewapi.ngminds.com/api/getAllProducts"
+  //   );
+  //   this.setShowData(res.data.products);
+  //   this.rowData = res.data.products;
+  //   this.cartDataCount = this.getDataFromLocalStorage("cartItem").length;
+  // },
+
+  setup() {
+    const { putIntoLocalStorage, getDataFromLocalStorage } = useLocalService();
+    let state = reactive({
       allData: [],
       rowData: [],
       color: ["bg-info", "bg-success", "bg-warning", "bg-danger"],
       cartDataCount: 0,
       sort: "default",
-    };
-  },
-  mixins: [localService],
-  methods: {
-    sorting(arr, type) {
+    });
+
+    function sorting(arr, type) {
       switch (type) {
         case "LowToHigh":
           return arr.sort((a, b) => a.price - b.price);
@@ -103,28 +199,16 @@ export default {
         default:
           return arr;
       }
-    },
-  //see in mixins
-    // //for setting data to local Storage
-    // putIntoLocalStorage(key, value) {
-    //   localStorage.setItem(key, JSON.stringify(value));
-    // },
-    // //for getting data from local Storage
-    // getDataFromLocalStorage(key) {
-    //   return localStorage.getItem(key)
-    //     ? JSON.parse(localStorage.getItem(key))
-    //     : [];
-    // },
-    //for seting state data
-    setState(data) {
-      this.allData = data;
-    },
+    }
+    function setState(data) {
+      state.allData = data;
+    }
     //setting showing data
-    setShowData(res) {
+    function setShowData(res) {
       let i = 0;
       let arr = [];
       // let res = this.sorting(param, this.sort);
-      res = this.sorting(res, this.sort);
+      res = sorting(res, state.sort);
       while (i < res.length) {
         const na = res.slice(i, i + 4);
         let e = na.map(({ _id, image, name, price }) => {
@@ -133,12 +217,12 @@ export default {
         arr.push(e);
         i += 4;
       }
-      this.setState(arr);
-    },
+      setState(arr);
+    }
     //for after @clicking add to cart adding element to cart
-    addToCart({ _id, image, name, price }) {
+    function addToCart({ _id, image, name, price }) {
       //{ _id, image, name, price }
-      let localData = this.getDataFromLocalStorage("cartItem");
+      let localData = getDataFromLocalStorage("cartItem");
 
       if (localData.length > 0) {
         //scenario second it is local storage data available but different products are added into cart
@@ -157,26 +241,36 @@ export default {
         //scenario first if nothing present in local storage
         localData.push({ _id, image, name, price, qty: 1 });
       }
-      this.putIntoLocalStorage("cartItem", localData);
-      this.cartDataCount = localData.length;
-    },
-  },
-  watch: {
-    sort: {
-      handler() {
-        this.setShowData([...this.rowData]);
+      putIntoLocalStorage("cartItem", localData);
+      state.cartDataCount = localData.length;
+    }
+
+    onMounted(async () => {
+      const res = await axios.get(
+        "http://interviewapi.ngminds.com/api/getAllProducts"
+      );
+      setShowData(res.data.products);
+      state.rowData = res.data.products;
+      state.cartDataCount = getDataFromLocalStorage("cartItem").length;
+    });
+    watch(
+      () => state.sort,
+      () => {
+        setShowData([...state.rowData]);
       },
-      immediate: true,
-      deep: true,
-    },
-  },
-  created: async function () {
-    const res = await axios.get(
-      "http://interviewapi.ngminds.com/api/getAllProducts"
+      {
+        immediate: true,
+        deep: true,
+      }
     );
-    this.setShowData(res.data.products);
-    this.rowData = res.data.products;
-    this.cartDataCount = this.getDataFromLocalStorage("cartItem").length;
+
+    return {
+      sorting,
+      setState,
+      setShowData,
+      addToCart,
+      ...toRefs(state),
+    };
   },
 };
 </script>
